@@ -247,11 +247,16 @@ quantile(white_wine$`residual sugar`, probs = seq(0,1,0.1))
 
 ```{r}
 white_wine |> 
-  summarise(medin(`residual sugar`),
+  summarise(median(`residual sugar`),
             .by = quality )#compute the summary on subgroups of the dtf, subgroups identifiy by value of a var
 
 ```
 
+```{r}
+white_wine |> mutate(alc_class = cut(alcohol, breaks = c(7,9,12,15,18))) |> 
+                     summarise(median(alc_class)) #bug here
+#breaks are the interval so it should contains smth smaller than min value and marger than max values
+```
 
 
 
