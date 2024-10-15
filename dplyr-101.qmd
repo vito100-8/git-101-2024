@@ -19,7 +19,7 @@ theme_set(theme_bw())
 
 ```{r}
 #| message: false
-white_wine <- vroom(here("data", "winequality-white.csv"))
+white_wine <- vroom(here("data", "winequality-white.csv")) #here in order not to writ \ or / to simplify
 ```
 
 |                        |                      |
@@ -150,7 +150,7 @@ white_wine |>
 ```{r}
 #| eval: false
 white_wine |> 
-  select(where(\(x) is.numeric(x) & (max(x) < 5)))
+  select(where(\(x) is.numeric(x) & (max(x) < 5))) #ano function, corresponding to a "lapply" to each column of the dtf which is a list
 ```
 
 ### Selecting rows
@@ -205,4 +205,53 @@ white_wine |>
   scale_color_viridis_c() +
   facet_wrap(vars(`alcohol category`))
 ```
+
+
+## Agregation fct
+
+aka summary fct that turns vector into value
+
+
+```{r}
+#logical ope : any(), all()
+
+
+```
+
+### simple summary use 
+
+```{r}
+white_wine |> summarise(median(alcohol),
+                        sd(alcohol))
+                  
+```
+
+```{r}
+white_wine |> select(alcohol) |> mutate(a_m_median = alcohol - median (alcohol), .keep = "none") # .smth modify the default parameter; here we say that we dont keep the previous columns of the dataset
+
+white_wine |> select(alcohol) |> mutate((na = alcohol - mean(alcohol))/IQR(alcohol), .keep = "none")
+
+
+```
+
+
+```{r}
+quantile(white_wine$`residual sugar`, probs = seq(0,1,0.1))
+
+
+```
+
+
+
+### group by
+
+```{r}
+white_wine |> 
+  summarise(medin(`residual sugar`),
+            .by = quality )#compute the summary on subgroups of the dtf, subgroups identifiy by value of a var
+
+```
+
+
+
 
