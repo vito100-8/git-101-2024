@@ -308,3 +308,43 @@ white_wine |>
   select(alcohol|quality)
 ```
 
+
+#### 'group_by()'
+
+```{r}
+white_wine |>
+  group_by(quality) |>#if i first do that and then use a fct (ex: summarize) i am going to get as if i put a ".by=group" command on each function
+  summarise(mean(`citric acid`))
+
+```
+possible to group ex: 
+
+```{r}
+diamonds |> group_by(cut, clarity) |> #layer grouping strat, first group by cut then sub-group by clarity
+  summarise(mean(price))
+```
+
+
+```{r}
+diamonds |> summarise(median(price), .by = c(cut,clarity)) |>
+  arrange(cut,clarity)
+```
+
+```{r}
+diamonds |>
+  group_by(cut,color) |>
+  summarise(N=n(), .groups = "drop_last") |>
+  summarise(sum(N)) #summarise will delete everything except the group it works on, here cut, and the summary itself
+ 
+```
+
+```{r}
+diamonds |>
+  group_by(cut,color) |>
+  summarise(N=n(), .groups = "drop_last") |>
+  mutate(prob=N/sum(N)) |> #mutate is group aware, agregation at the level of the group
+  ungroup()
+```
+
+
+
