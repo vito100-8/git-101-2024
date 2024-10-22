@@ -253,10 +253,33 @@ white_wine |>
 ```
 
 ```{r}
-white_wine |> mutate(alc_class = cut(alcohol, breaks = c(7,9,12,15,18))) |> 
-                     summarise(median(alc_class)) #bug here
+white_wine |> mutate(ac = cut(alcohol, breaks = c(7,9,12,15,18))) |> summarize(median(`residual sugar`),
+                                                                               n(), 
+                                                                               .by=ac ) #bug here : solve : issue with .by commmand
 #breaks are the interval so it should contains smth smaller than min value and marger than max values
 ```
 
 
+```{r}
+white_wine |> mutate(ac=cut(alcohol, breaks = c(9,10,11,12,15), ordered_results = TRUE)) |>
+  summarise(median(`residual sugar`), n(), .by = ac)
+```
+
+```{r}
+white_wine |> mutate(ac=cut(alcohol, breaks = c(7,10,11,12,15), ordered_results = TRUE)) |> 
+  ggplot(aes(x=ac)) + 
+  geom_bar()
+```
+
+```{r}
+aq <- white_wine |> pull(alcohol) |> quantile(probs = seq(0, 1, by=0.2)) #remember the way by is written
+aq
+white_wine |> mutate(ac=cut(alcohol, breaks = aq, ordered_results = TRUE)) |> 
+  ggplot(aes(x=ac, fill = quality)) + 
+  geom_bar(position ="fill")
+```
+
+```{r}
+
+```
 
