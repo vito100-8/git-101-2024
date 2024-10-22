@@ -346,5 +346,69 @@ diamonds |>
   ungroup()
 ```
 
+## Tidying data
 
+```{r}
+install.packages("tidyr")
+library(tidyr)
+
+```
+
+### long to wide table
+```{r}
+color_given_cut <- diamonds |>
+  group_by(cut,color) |>
+  summarise(N=n(), .groups = "drop_last") |>
+  mutate(prob=N/sum(N)) |> #mutate is group aware, agregation at the level of the group
+  ungroup()
+
+```
+
+```{r}
+#lets reshape to have a better view on the condi proba
+#when we pivot ? : ideally when there are 3 columns :  2id var and one var that gives the value
+color_given_cut |> select(!N) |> #!N select all except N
+  pivot_wider(id_cols= cut, names_from = color, values_from = prob)
+```
+
+### wide to long table
+
+```{r}
+data("world_bank_pop")
+```
+
+```{r}
+world_bank_pop |> filter(indicator == "SP.POP.TOTL")|>
+  select(!indicator) |>
+  pivot_longer(!country, names_to = "year", names_transform = as.integer, values_to = "total pop") |>
+  #changed the name of the new variables we kept
+  filter(country =="ESP") |>
+  ggplot(aes(x=year, y = `total pop`, color= country)) + geom_line() + theme(legend.position = "none")
+```
+
+```{r}
+#multiple id kept(we kept every indicator)
+world_bank_pop |> 
+  filter(country %in% c("ESP","FRA")) |>
+  select(!indicator) |>
+  pivot_longer(!country & !indicator)
+```
+
+```{r}
+world_bank_pop |> filter(indicator == "SP.POP.TOTL")|>
+  select(!indicator) |>
+  pivot_longer(!country, names_to = "year", names_transform = as.integer, values_to = "total pop") |>
+  ggplot(aes(x=year, y = `total pop`, color= country)) + geom_line() + theme(legend.position = "none")
+```
+
+```{r}
+#to see better
+world_bank_pop |> filter(indicator == "SP.POP.TOTL")|>
+  select(!indicator) |>
+  filter(!is.na(`2000`)) |>
+  slice_sample(n= 10, weight_by =`2000`)|>
+  pivot_longer(!country, names_to = "year", names_transform = as.integer, values_to = "total pop") |>
+  ggplot(aes(x=year, y = `total pop`, color= country)) + geom_line() + theme(legend.position = "right") +
+  scale_y_continuous(transform = "log10")
+```
 
