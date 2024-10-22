@@ -245,6 +245,7 @@ quantile(white_wine$`residual sugar`, probs = seq(0,1,0.1))
 
 ### group by
 
+#### continous var
 ```{r}
 white_wine |> 
   summarise(median(`residual sugar`),
@@ -279,7 +280,31 @@ white_wine |> mutate(ac=cut(alcohol, breaks = aq, ordered_results = TRUE)) |>
   geom_bar(position ="fill")
 ```
 
-```{r}
+####Functions with a .by parameter
 
+some dplyr verbs supports the .by parameter : 
+-summarise, mutate, slice, filter, reframe
+```{r}
+white_wine |>
+  select(1:2) |> #for the column
+  slice(1:5)  #for the rows
+
+
+```
+
+```{r}
+white_wine |>
+ slice(1:5, .by = quality) |> #5 different quality used
+  select(1:2|quality) #two columns selected and quality
+```
+
+```{r}
+white_wine |> 
+  slice_sample(n=1, by = quality) |> #careful of the by notation 
+  select(1:2|quality)
+
+white_wine |> 
+  slice_max(alcohol, by = quality) |> #careful of the by notation 
+  select(alcohol|quality)
 ```
 
