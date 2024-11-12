@@ -227,7 +227,7 @@ white_wine |> summarise(median(alcohol),
 ```
 
 ```{r}
-white_wine |> select(alcohol) |> mutate(a_m_median = alcohol - median (alcohol), .keep = "none") # .smth modify the default parameter; here we say that we dont keep the previous columns of the dataset
+white_wine |> select(alcohol) |> mutate(a_m_median = alcohol - median (alcohol), .keep = "none") # .smth modify the default parameter; here we say that we dont keep the columns that we haven't called
 
 white_wine |> select(alcohol) |> mutate((na = alcohol - mean(alcohol))/IQR(alcohol), .keep = "none")
 
@@ -300,7 +300,7 @@ white_wine |>
 
 ```{r}
 white_wine |> 
-  slice_sample(n=1, by = quality) |> #careful of the by notation 
+  slice_sample(n=1, by = quality) |> #careful of the by notation, slice one line per quality bc n=1 and we order by qualityk
   select(1:2|quality)
 
 white_wine |> 
@@ -411,4 +411,95 @@ world_bank_pop |> filter(indicator == "SP.POP.TOTL")|>
   ggplot(aes(x=year, y = `total pop`, color= country)) + geom_line() + theme(legend.position = "right") +
   scale_y_continuous(transform = "log10")
 ```
+
+## Nesting
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+df_list <- tibble(x= 1:3,
+                y = letters[1:3],
+                z= list(c(1,2),c("Alice","Bob", "Charlie"),3))
+#if we want a df instead of a tible we put the I operator in front of complex columns (ie here in   z= I(..))
+df_list
+```
+
+###Linear models
+
+```{r}
+diamonds_price_lm <- lm(price ~ . , data = diamonds) #dependant on all var including an intercept
+```
+
+```{r}
+diamonds_price_lm
+summary(diamonds_price_lm)
+plot(diamonds_price_lm)
+```
+
+
+```{r}
+library(tidyr)
+#create a lm of the subset of the dataset id by the cut
+#possible to filter and then lm but we can do it with nesting
+diamonds_price_cut_lm <- diamonds |> nest(.by = cut) |> mutate(sub_lm =lapply(data, \(x) lm(price ~., data = x)) )
+#we are applying an ano fct to each nest that do a linear regression
+```
+```{r}
+install.packages("broom")
+library(broom)
+```
+
+
+```{r}
+
+#need the package "broom"
+diamonds_price_cut_lm <- diamonds |> nest(.by = cut) |> mutate(sub_lm =lapply(data, \(x) lm(price ~., data = x)) )
+
+diamonds_price_cut_sub_lm <- diamonds |> nest(.by = cut) |> mutate(tlm = lapply(sub_lm, tidy))
+#version to have cleaner data
+
+```
+
+```{r}
+#we unnest the coefficients chose in 'select'
+diamonds_price_cut_lm |> select(cut, tlm) |> unnest(tlm) |>
+  select(cut, term, estimate) |>
+  pivot_wider(names_from = term, values_from = estimate)
+#pivot to have a row per cut
+
+```
+
+```{r}
+diamonds_price_cut_lm |> select(cut, tlm) |> unnest(tlm) |>
+  select(cut, tlm) |>
+  unnest(tlm) |>
+  filter(p.value < 0.01) |>
+  select(cut,term, estimate) |>
+  pivot_wider(names_from = term, values_from = estimate)
+#pivot to have a row per cut
+```
+
+## Multiple dtb
+
+### Northwind ex
+```{r}
+products <- vroom(here("data", "northwind", "Products.csv"))
+
+```
+The product id column is the **primary key** of the **products** table
+meaning that the values are unique (same nb of values than rows)
+```{r}
+#we can delete na and nan value in the table and check if the values are all distinct (primary key)
+pid_nb <- products |> 
+  select(ProductID) |>
+  filter(!is.na(ProductID) & !is.nan(ProductID)) |> 
+  distinct(ProductID) |>
+  nrow()
+```
+
+Product is a valid **primary key** if `r pid_nb` == nrow(products)
+
+
 
