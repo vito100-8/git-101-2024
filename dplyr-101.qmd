@@ -483,7 +483,7 @@ diamonds_price_cut_lm |> select(cut, tlm) |> unnest(tlm) |>
 
 ## Multiple dtb
 
-### Northwind ex
+### Primary key
 ```{r}
 products <- vroom(here("data", "northwind", "Products.csv"))
 
@@ -500,6 +500,82 @@ pid_nb <- products |>
 ```
 
 Product is a valid **primary key** if `r pid_nb` == nrow(products)
+### Foreign keys
+
+```{r}
+library(readr)
+categories <- read_csv(here("data", "northwind", "Categories.csv"), col_types = "icc-")
+```
+The **categoryID** column is the **primary key** of the **categories** table
+The products table has a **categoryID** column which is likely to be a foreign key referencing the **primary key** of **categories**
+### Join 
+way to combine 2 tables into a single one by selecting a subset of the cartesian product btw the 2 tables
+Cartesian product of 2 sets : collection of pairs
+
+The natural join selects only pairs of tupples (row of a column) that have the same value of columns that have the same names
+
+```{r}
+p_c <- products |> 
+  inner_join(categories) #will detect automatically the joining by the thing in common (natural join)
+```
+ the two are separated bc we want to avoid redundances in the same table but we keep smth to associate them (ie an ID)
+
+Lets break categoryID column in products and try to join nevertheless
+```{r}
+broken_p_c <- products |> 
+  mutate(CategoryID = CategoryID - 1) |>
+  inner_join(categories)
+```
+
+in this case tupples with no match are removed
+
+
+we can verify that categoryID is a **Foreign key** by counting the nb of couples in the results 
+-> `r nrow(p_c) == nrow(products)`
+
+### Application ex 
+
+we want a single table with all the categories (given by their name) and for each category the nb of products
+Broken solution
+```{r}
+products |> summarise("Number of prod" = n(), .by = CategoryID)
+```
+
+First sol 
+```{r}
+products |> summarise("Number of prod" = n(), .by = CategoryID) |>
+  inner_join(categories) |> select(!Description) |>
+  select(!CategoryID) |> 
+  arrange(CategoryName) |>
+  rename(Category = CategoryName) |> 
+  relocate(Category) |> #to change the order of column, put categoryname in front
+  knitr::kable()
+
+```
+Second sol : join then summarize
+```{r}
+products |>
+  select(CategoryID) |>
+  inner_join(categories |> select(Category = CategoryName, CategoryID),
+         by =  join_by(CategoryID))|>
+  summarise("Nb of products" = n(), .by = Category) |>
+  arrange(Category)
+```
+
+
+```{r}
+suppliers <- vroom(here("data","northwind", "Suppliers.csv"))
+```
+
+we want a table of countries that associates a country to the nb of products that are supplied by suppliers of this country
+```{r}
+products |> 
+  select(SupplierID) |>
+  inner_join(suppliers |> select(SupplierID, Country), by = join_by(SupplierID)) |> #we use select to optimise the computation
+  summarize("Nb of products"= n(), .by = Country)
+  
+  
+```
 
 
 
